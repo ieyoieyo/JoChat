@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat;
+package net.jo.chat;
 
 import android.app.Activity;
 import android.content.Context;
