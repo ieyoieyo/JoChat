@@ -20,6 +20,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
@@ -28,6 +30,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -35,6 +38,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -44,6 +49,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.google.firebase.storage.FirebaseStorage;
@@ -86,6 +92,21 @@ public class MainActivity extends AppCompatActivity {
     private StorageReference mChatPhotosStorageReference;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
 
+    private RecyclerView recyclerView;
+    private FireUIAdapter fireUIAdapter;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        fireUIAdapter.startListening();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        fireUIAdapter.stopListening();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,11 +129,30 @@ public class MainActivity extends AppCompatActivity {
         mPhotoPickerButton = (ImageButton) findViewById(R.id.photoPickerButton);
         mMessageEditText = (EditText) findViewById(R.id.messageEditText);
         mSendButton = (Button) findViewById(R.id.sendButton);
+        recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
 
         // Initialize message ListView and its adapter
         List<FriendlyMessage> friendlyMessages = new ArrayList<>();
         mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
 //        mMessageListView.setAdapter(mMessageAdapter);
+
+
+
+        Query query = mMessagesDatabaseReference
+//                .child("messages")
+                .limitToLast(50);
+        FirebaseRecyclerOptions<JoMsg> options =
+                new FirebaseRecyclerOptions.Builder<JoMsg>()
+                        .setQuery(query, JoMsg.class)
+                        .build();
+        fireUIAdapter = new FireUIAdapter(options);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(fireUIAdapter);
+
+
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+//        mRecyclerView.setHasFixedSize(true);
 
         // Initialize progress bar
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
@@ -153,8 +193,8 @@ public class MainActivity extends AppCompatActivity {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FriendlyMessage friendlyMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
-                mMessagesDatabaseReference.push().setValue(friendlyMessage);
+                JoMsg joMsg = new JoMsg(mMessageEditText.getText().toString(), mUsername, null);
+                mMessagesDatabaseReference.push().setValue(joMsg);
 
                 // Clear input box
                 mMessageEditText.setText("");
@@ -281,13 +321,16 @@ public class MainActivity extends AppCompatActivity {
         detachDatabaseReadListener();
     }
 
+    private List<DataSnapshot> dataList = new ArrayList<>();
     private void attachDatabaseReadListener() {
         if (mChildEventListener == null) {
             mChildEventListener = new ChildEventListener() {
                 @Override
-                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    FriendlyMessage friendlyMessage = dataSnapshot.getValue(FriendlyMessage.class);
-                    mMessageAdapter.add(friendlyMessage);
+                public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                    dataList.add(dataSnapshot);
+//                    JoMsg joMsg = dataSnapshot.getValue(JoMsg.class);
+//                    mMessageAdapter.add(friendlyMessage);
+                    Log.d(TAG, "dataList _" + dataList.toString());
                 }
 
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
@@ -295,7 +338,12 @@ public class MainActivity extends AppCompatActivity {
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
                 public void onCancelled(DatabaseError databaseError) {}
             };
-            mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
+//            mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
+
+//            MsgAdapter msgAdapter = new MsgAdapter(dataList);
+//            recyclerView.setAdapter(msgAdapter);
+
+
         }
     }
 
@@ -320,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Void aVoid) {
                         // Make the fetched config available
-                        // via FirebaseRemoteConfig get<type> calls, e.g., getLong, getString.
+                        // via FirebaseRemoteConfig get<viewType> calls, e.g., getLong, getString.
                         mFirebaseRemoteConfig.activateFetched();
 
                         // Update the EditText length limit with
