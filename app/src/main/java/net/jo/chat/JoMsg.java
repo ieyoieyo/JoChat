@@ -5,8 +5,6 @@ package net.jo.chat;
  */
 
 public class JoMsg {
-    public static final int MSG_TEXT = 1;
-    public static final int MSG_IMAGE = 2;
 
     private String text;
     private String name;
@@ -18,10 +16,6 @@ public class JoMsg {
         this.text = text;
         this.name = name;
         this.photoUrl = photoUrl;
-    }
-
-    public int getType() {
-        return (photoUrl == null) ? MSG_TEXT : MSG_IMAGE;
     }
 
     public String getText() {

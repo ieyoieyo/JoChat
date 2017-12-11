@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
     private StorageReference mChatPhotosStorageReference;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
 
-    private RecyclerView recyclerView;
+    public RecyclerView recyclerView;
     private FireUIAdapter fireUIAdapter;
 
     @Override
@@ -145,14 +145,14 @@ public class MainActivity extends AppCompatActivity {
                 new FirebaseRecyclerOptions.Builder<JoMsg>()
                         .setQuery(query, JoMsg.class)
                         .build();
-        fireUIAdapter = new FireUIAdapter(options);
+        fireUIAdapter = new FireUIAdapter(options, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(fireUIAdapter);
 
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
-//        mRecyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(true);
 
         // Initialize progress bar
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
@@ -269,8 +269,8 @@ public class MainActivity extends AppCompatActivity {
                             Uri downloadUrl = taskSnapshot.getDownloadUrl();
 
                             // Set the download URL to the message box, so that the user can send it to the database
-                            FriendlyMessage friendlyMessage = new FriendlyMessage(null, mUsername, downloadUrl.toString());
-                            mMessagesDatabaseReference.push().setValue(friendlyMessage);
+                            JoMsg joMsg = new JoMsg(null, mUsername, downloadUrl.toString());
+                            mMessagesDatabaseReference.push().setValue(joMsg);
                         }
                     });
         }

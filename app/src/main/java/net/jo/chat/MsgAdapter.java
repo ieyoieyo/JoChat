@@ -13,6 +13,9 @@ import com.google.firebase.database.DataSnapshot;
 
 import java.util.List;
 
+import static net.jo.chat.FireUIAdapter.MSG_IMAGE;
+import static net.jo.chat.FireUIAdapter.MSG_TEXT;
+
 /**
  * Created by Johnny on 2017/12/3.
  */
@@ -43,12 +46,12 @@ public class MsgAdapter extends RecyclerView.Adapter {
             msgImage = itemView.findViewById(R.id.msgImage);
 
             switch (viewType) {
-                case JoMsg.MSG_TEXT:
+                case MSG_TEXT:
                     Log.d(TAG, "viewType = TEXT");
                     msgWord.setVisibility(View.VISIBLE);
                     msgImage.setVisibility(View.GONE);
                     break;
-                case JoMsg.MSG_IMAGE:
+                case MSG_IMAGE:
                     Log.d(TAG, "viewType = IMAGE");
                     msgWord.setVisibility(View.GONE);
                     msgImage.setVisibility(View.VISIBLE);
@@ -68,7 +71,7 @@ public class MsgAdapter extends RecyclerView.Adapter {
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_msg, parent, false);
         JoMsg joMsg = dataSnapshot.getValue(JoMsg.class);
-        int type = (joMsg.getPhotoUrl() == null) ? JoMsg.MSG_TEXT : JoMsg.MSG_IMAGE;
+        int type = (joMsg.getPhotoUrl() == null) ? MSG_TEXT : MSG_IMAGE;
 
         Log.d(TAG, "onCreateViewHolder, viewType = " + viewType);
         return new JoViewHolder(view, type);
